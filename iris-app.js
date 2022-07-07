@@ -901,7 +901,7 @@ function Application(appFolder, appConfig) {
                     headers[headers.length] = "Set-Cookie: "+sessionCookie;
             })
         })
-        self.io = socketio.listen(server, {
+        const defaultOptions = {
             'log level': 0, 'secure': CERTIFICATES ? true : false,
             allowRequest: function(req, fn){
                 if(self.config.handleWSSession){
@@ -910,7 +910,23 @@ function Application(appFolder, appConfig) {
                     fn(null, true);
                 }
             }
-        });
+        };
+
+        // VLS websocket.path : it is used in initWebsocket_v1 but not here originally, so remove
+        const socketOptions = { ...defaultOptions, ...self.config?.websocket};
+        delete socketOptions.path;
+        self.io = socketio.listen(server,
+            socketOptions
+            // {
+            // 'log level': 0, 'secure': CERTIFICATES ? true : false,
+            // allowRequest: function(req, fn){
+            //     if(self.config.handleWSSession){
+            //         self.allowWSRequest(req, fn)
+            //     }else{
+            //         fn(null, true);
+            //     }
+            // },
+        );
 
         /*
         console.log("self.io", self.io.eio.ws)
@@ -1052,7 +1068,8 @@ function Application(appFolder, appConfig) {
     }
 
     this.initWebsocket_v1 = (callback)=>{
-        this.webSocketMap = [ ]
+        this.webSocketMap = [ ];
+        // setup the socket namespace
         this.webSockets = this.io.of(this.config.websocket.path).on('connection', (socket)=>{
             this.verbose > this.log.DEBUG && console.log("websocket "+socket.id+" connected");
             this.emit('websocket::connect', socket);
