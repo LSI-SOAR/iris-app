@@ -547,8 +547,16 @@ function Application(appFolder, appConfig) {
 
         if(self.config.mongodb) {
             var sessionUrl = self.config.mongodb.sessionStore || self.config.mongodb.main || self.config.mongodb;
-            var mongoUrl = typeof sessionUrl === 'string' ? sessionUrl : sessionUrl.main;
-            self.app.sessionStore = ConnectMongo.create({ mongoUrl: mongoUrl });
+            var mongoUrl = typeof sessionUrl === 'string' ? sessionUrl : (sessionUrl && sessionUrl.main);
+            if (!mongoUrl) return callback(new Error('mongodb config must provide a URL (string or .main / .sessionStore)'));
+            // connect-mongo v5+: .create({ mongoUrl }). Support both direct export and .default (CJS/TS interop, e.g. 5.1.0)
+            var MongoStoreModule = ConnectMongo && ConnectMongo.create ? ConnectMongo : (ConnectMongo && ConnectMongo.default) || ConnectMongo;
+            if (typeof MongoStoreModule.create === 'function') {
+                self.app.sessionStore = MongoStoreModule.create({ mongoUrl: mongoUrl });
+            } else {
+                var MongoStore = MongoStoreModule(ExpressSession);
+                self.app.sessionStore = new MongoStore({ url: mongoUrl });
+            }
             self.expressSession = ExpressSession({
                 secret: self.app.sessionSecret,
                 key: self.config.http.session.key,
