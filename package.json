@@ -25,7 +25,7 @@
     "getmac": "^1.2.1",
     "iris-rpc": "*",
     "iris-stats": "*",
-    "iris-utils": "*",
+    "iris-utils": "git+https://github.com/LSI-SOAR/iris-utils.git#update-mongodb",
     "method-override": "^2.3.6",
     "mongodb": "^6.0.0",
     "node-uuid": "^1.4.7",
