@@ -462,7 +462,7 @@ function Application(appFolder, appConfig) {
             if(!databaseName)
                 return callback({error: `DB ${name} config url dont have database name.`})
 
-            mongo.MongoClient.connect(db, {useUnifiedTopology:true}, function (err, client) {
+            mongo.MongoClient.connect(db, function (err, client) {
                 if (err)
                     return callback(err);
 
@@ -487,14 +487,14 @@ function Application(appFolder, appConfig) {
         self.db = { }
         self.databases = { }
 
-        mongo.MongoClient.connect(self.config.mongodb, {useUnifiedTopology:true}, function (err, database) {
+        mongo.MongoClient.connect(self.config.mongodb, function (err, client) {
             if (err)
                 return callback(err);
 
-            self.database = database;
+            self.database = client.db();
 
             console.log("Database connected", self.config.mongodb);
-            irisUtils.bind_database_config(database, self.databaseCollections, function (err, db) {
+            irisUtils.bind_database_config(self.database, self.databaseCollections, function (err, db) {
                 if (err)
                     return callback(err);
                 _.extend(self.db, db);
@@ -546,8 +546,9 @@ function Application(appFolder, appConfig) {
         self.app.use(flash({unsafe: false}));
 
         if(self.config.mongodb) {
-            var MongoStore = ConnectMongo(ExpressSession);
-            self.app.sessionStore = new MongoStore({url: self.config.mongodb.sessionStore || self.config.mongodb.main || self.config.mongodb});
+            var sessionUrl = self.config.mongodb.sessionStore || self.config.mongodb.main || self.config.mongodb;
+            var mongoUrl = typeof sessionUrl === 'string' ? sessionUrl : sessionUrl.main;
+            self.app.sessionStore = ConnectMongo.create({ mongoUrl: mongoUrl });
             self.expressSession = ExpressSession({
                 secret: self.app.sessionSecret,
                 key: self.config.http.session.key,
