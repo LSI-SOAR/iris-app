@@ -23,7 +23,7 @@
     "express": "^4.14.0",
     "express-session": "^1.13.0",
     "getmac": "^1.2.1",
-    "iris-base58": "*",
+    "bs58": "^5.0.0",
     "iris-rpc": "*",
     "iris-stats": "*",
     "iris-utils": "*",
